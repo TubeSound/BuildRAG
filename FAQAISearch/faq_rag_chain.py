@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import numpy as np
 import pickle
 
-from vertex_ai import VertexAI
+from vector_encoders import VertexAI
 from faiss_indexer import FaissModel, FaissIndexer
 from gemini_llm import GeminiLLM
 
@@ -39,13 +39,13 @@ def load_binary(filepath):
         data = pickle.load(f)
     return data
 
-def test():
-    load_dotenv('.env')
+def rag_query(question):
+    load_dotenv('./secrets/.env')
     vertexai = VertexAI(os.getenv('PROJECT_ID'), os.getenv('CREDENTIAL_FILE'), os.getenv('REGION'))
     #build_index(vertexai, './data/rag_indexer.pkl')
     [indexer, text_list] = load_binary('./data/rag_indexer.pkl')
     
-    question = "明日は晴れですか？"
+    #question = "バッテリの修理はどれくらいかかりますか？"
     vector = vertexai.vectorize(question)
     numbers, scores = indexer.search(vector)
     candidates = ""
@@ -58,9 +58,10 @@ def test():
     prompt += "質問：" + question + "\r\n\r\n"
     prompt += "以下が質問の候補です。\r\n"
     prompt += candidates
-    prompt += "\r\n最も適切な回答とその理由を出力してください。"
+    prompt += "\r\n最も適切な回答とIDおよびその理由をJSON形式で出力してください。"
     ans = llm.query(prompt)
-    print(ans)
+    return ans
     
 if __name__ == '__main__':
-    main()
+    ans = rag_query('バッテリの修理にはどれくらいかかりますか？')
+    print(ans)
